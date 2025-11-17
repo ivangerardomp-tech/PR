@@ -97,6 +97,7 @@ function updatePRFromLocation() {
         return;
     }
 
+    // Obtener el tramo más cercano
     const tramo = nearestTramo(lat, lng);
     currentTramo = tramo;
 
@@ -105,12 +106,14 @@ function updatePRFromLocation() {
         return;
     }
 
+    // Obtener la distancia desde el origen del tramo
     const dist = distanciaDesdeOrigenTramo(tramo, lat, lng);
     if (dist == null || Number.isNaN(dist)) {
         currentPR = null;
         return;
     }
 
+    // Buscar el PR correspondiente usando la distancia
     if (typeof findPR === "function") {
         currentPR = findPR(tramo, dist); // { pr, metros }
     }
