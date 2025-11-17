@@ -94,20 +94,30 @@ function getLocationOnce() {
 // ---------------------------
 function updatePRFromLocation() {
     if (lat == null || lng == null) return;
-    if (typeof nearestTramo !== "function") return;
+    if (typeof nearestTramo !== "function" ||
+        typeof distanciaDesdeOrigenTramo !== "function") {
+        return;
+    }
 
-    currentTramo = nearestTramo(lat, lng);
+    const tramo = nearestTramo(lat, lng);
+    currentTramo = tramo;
 
-    if (!currentTramo) {
+    if (!tramo) {
+        currentPR = null;
+        return;
+    }
+
+    const dist = distanciaDesdeOrigenTramo(tramo, lat, lng);
+    if (dist == null || Number.isNaN(dist)) {
         currentPR = null;
         return;
     }
 
     if (typeof findPR === "function") {
-        const distancia = 0; // luego se puede cambiar por distancia real
-        currentPR = findPR(currentTramo, distancia);
+        currentPR = findPR(tramo, dist); // { pr, metros }
     }
 }
+
 
 // ---------------------------
 // Actualizar HUD en vivo
@@ -183,9 +193,14 @@ setInterval(updateHUD, 1000);
 // ---------------------------
 async function autoStart() {
     try {
+        const geomPromises = [];
+        if (window.kmlReady) geomPromises.push(window.kmlReady.catch(() => {}));
+        if (window.prsReady) geomPromises.push(window.prsReady.catch(() => {}));
+
         await Promise.all([
             initCamera(),
-            getLocationOnce()
+            getLocationOnce(),
+            ...geomPromises
         ]);
 
         await new Promise(resolve => {
@@ -202,6 +217,7 @@ async function autoStart() {
         showToast(err.message || "No se pudo activar la cámara o ubicación.");
     }
 }
+
 
 document.addEventListener("DOMContentLoaded", autoStart);
 
@@ -235,14 +251,30 @@ btnCapture.addEventListener("click", async () => {
         return;
     }
 
-    if (typeof nearestTramo !== "function" || typeof findPR !== "function") {
-        alert("Datos de tramo/PR aún no cargados. Espera unos segundos.");
+    if (typeof nearestTramo !== "function" ||
+        typeof distanciaDesdeOrigenTramo !== "function" ||
+        typeof findPR !== "function") {
+        alert("Datos de tramo/PR aún no están listos.");
         return;
     }
 
-    const tramo = currentTramo || nearestTramo(lat, lng) || "SIN TRAMO";
-    const distancia = 0;
-    const prInfo = currentPR || findPR(tramo, distancia);
+    // Intentamos usar lo que ya se calculó en vivo
+    let tramo = currentTramo;
+    let prInfo = currentPR;
+
+    // Si por alguna razón no hay datos, recalculamos todo aquí
+    if (!tramo || !prInfo) {
+        tramo = nearestTramo(lat, lng);
+        if (tramo) {
+            const dist = distanciaDesdeOrigenTramo(tramo, lat, lng);
+            if (dist != null && !Number.isNaN(dist)) {
+                prInfo = findPR(tramo, dist);
+            }
+        }
+    }
+
+    if (!tramo) tramo = "SIN TRAMO";
+    if (!prInfo) prInfo = { pr: "?", metros: 0 };
 
     const ctx = canvas.getContext("2d");
     const w = video.videoWidth || 1280;
@@ -319,7 +351,6 @@ btnCapture.addEventListener("click", async () => {
             return;
         }
 
-        // Guardar en galería interna
         const url = URL.createObjectURL(blob);
         const timestamp = new Date().toLocaleString();
         capturedPhotos.push({ url, timestamp });
@@ -346,6 +377,7 @@ btnCapture.addEventListener("click", async () => {
         }
     }, "image/jpeg");
 });
+
 
 // ---------------------------
 // Galería interna
