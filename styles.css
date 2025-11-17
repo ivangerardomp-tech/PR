@@ -33,7 +33,7 @@ video {
     padding: 4px 8px;
     text-align: left;
     border-radius: 0 0 10px 10px;
-    z-index: 3;              /* Asegura que se vea en Safari */
+    z-index: 3;              /* Asegura que se vea en Safari y PWA */
     pointer-events: none;    /* No bloquea taps en el video */
 }
 
