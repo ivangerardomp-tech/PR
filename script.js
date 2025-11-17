@@ -10,6 +10,9 @@ let lng = null;
 let currentTramo = null;
 let currentPR = null;
 
+const isStandalone = window.matchMedia &&
+                     window.matchMedia("(display-mode: standalone)").matches;
+
 // ---------------------------
 // Toast / notificación
 // ---------------------------
@@ -28,7 +31,10 @@ function showToast(message) {
 // ---------------------------
 async function initCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        throw new Error("Este navegador no soporta cámara.");
+        const msg = isStandalone
+            ? "Este dispositivo/versión de iOS no permite usar la cámara desde apps instaladas en la pantalla de inicio. Abre la página desde Safari directamente."
+            : "Este navegador no soporta acceso a la cámara.";
+        throw new Error(msg);
     }
 
     try {
@@ -36,6 +42,8 @@ async function initCamera() {
             video: { facingMode: "environment" }
         });
         video.srcObject = stream;
+        video.playsInline = true;
+        video.muted = true;
     } catch (err) {
         console.error("Error getUserMedia:", err);
         throw err;
@@ -135,12 +143,21 @@ async function autoStart() {
             }
         });
 
-        btnCapture.disabled = false;
-        statusEl.textContent = "Cámara lista ✓";
+        // Si seguimos sin tamaño de video, probablemente iOS PWA lo ha bloqueado
+        if (!video.videoWidth || !video.videoHeight) {
+            if (isStandalone) {
+                statusEl.textContent = "iOS (PWA) no está entregando video. Usa la página desde Safari directamente.";
+            } else {
+                statusEl.textContent = "La cámara no está entregando imagen.";
+            }
+        } else {
+            btnCapture.disabled = false;
+            statusEl.textContent = "Cámara lista ✓";
+        }
 
     } catch (err) {
         console.error("Error en autoStart:", err);
-        statusEl.textContent = "No se pudo activar la cámara. Revisa permisos.";
+        statusEl.textContent = err.message || "No se pudo activar la cámara. Revisa permisos.";
     }
 }
 
@@ -160,10 +177,19 @@ video.addEventListener("click", async () => {
                 video.onloadedmetadata = () => resolve();
             }
         });
-        statusEl.textContent = "Cámara activa ✓";
+        if (!video.videoWidth || !video.videoHeight) {
+            if (isStandalone) {
+                statusEl.textContent = "iOS no permite usar la cámara en esta PWA. Usa Safari directamente.";
+            } else {
+                statusEl.textContent = "La cámara no está entregando imagen.";
+            }
+        } else {
+            statusEl.textContent = "Cámara activa ✓";
+            btnCapture.disabled = false;
+        }
     } catch (err) {
         console.error("Error reintentando cámara:", err);
-        statusEl.textContent = "No se pudo activar la cámara. Verifica permisos en Ajustes.";
+        statusEl.textContent = err.message || "No se pudo activar la cámara. Verifica permisos en Ajustes.";
     }
 });
 
@@ -198,7 +224,7 @@ btnCapture.addEventListener("click", async () => {
     // 🔹 Usar EXACTAMENTE el mismo texto que el HUD
     const hudString = hudText.textContent || "";
 
-    // Mismo estilo: barra negra semitransparente abajo, texto blanco pequeño
+    // MISMO estilo de HUD: barra negra abajo, texto blanco pequeño
     ctx.font = "12px Arial";
     const paddingY = 6;
     const barHeight = 12 + paddingY * 2;
@@ -209,7 +235,6 @@ btnCapture.addEventListener("click", async () => {
     ctx.fillStyle = "#ffffff";
     ctx.textBaseline = "middle";
 
-    // Pequeño margen a la izquierda
     const textX = 8;
     const textY = h - barHeight / 2;
     ctx.fillText(hudString, textX, textY);
