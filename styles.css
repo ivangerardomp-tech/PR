@@ -41,7 +41,7 @@ video {
     box-sizing: border-box;
     background: rgba(0, 0, 0, 0.45);
     color: #fff;
-    font-size: 18px; /* 50% más grande que antes (12px -> 18px) */
+    font-size: 18px; /* texto grande */
     padding: 6px 8px;
     text-align: left;
     border-radius: 0 0 10px 10px;
