@@ -1,14 +1,21 @@
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const btnCapture = document.getElementById("btnCapture");
+const btnGallery = document.getElementById("btnGallery");
 const hudText = document.getElementById("hud-text");
 const toastEl = document.getElementById("toast");
+
+const galleryOverlay = document.getElementById("galleryOverlay");
+const btnCloseGallery = document.getElementById("btnCloseGallery");
+const galleryGrid = document.getElementById("galleryGrid");
+const galleryPreviewImg = document.getElementById("galleryPreviewImg");
 
 let lat = null;
 let lng = null;
 let currentTramo = null;
 let currentPR = null;
-let hudLines = []; // mismas líneas para HUD y para captura
+let hudLines = []; // mismas líneas para HUD y captura
+let capturedPhotos = []; // { url, timestamp }
 
 // ---------------------------
 // Toast / notificación
@@ -79,13 +86,13 @@ function updatePRFromLocation() {
     }
 
     if (typeof findPR === "function") {
-        const distancia = 0; // luego lo cambias por distancia real sobre la ruta
+        const distancia = 0; // luego se puede cambiar por distancia real
         currentPR = findPR(currentTramo, distancia);
     }
 }
 
 // ---------------------------
-// Actualizar HUD en vivo (y hudLines)
+// Actualizar HUD en vivo
 // ---------------------------
 function updateHUD() {
     const now = new Date();
@@ -109,7 +116,7 @@ function updateHUD() {
         lines.push("Tramo/PR: calculando…");
     }
 
-    hudLines = lines;                // 👈 mismas líneas para la captura
+    hudLines = lines;
     hudText.innerHTML = lines.join("<br>");
 }
 setInterval(updateHUD, 1000);
@@ -124,7 +131,6 @@ async function autoStart() {
             getLocationOnce()
         ]);
 
-        // Esperar a que el video tenga metadatos de tamaño
         await new Promise(resolve => {
             if (video.readyState >= 1 && video.videoWidth > 0) {
                 resolve();
@@ -143,7 +149,7 @@ async function autoStart() {
 document.addEventListener("DOMContentLoaded", autoStart);
 
 // ---------------------------
-// TAP EN VIDEO: reintentar cámara si fuera necesario
+// TAP EN VIDEO: reintentar cámara si algo falla
 // ---------------------------
 video.addEventListener("click", async () => {
     if (video.videoWidth && video.videoHeight) {
@@ -188,10 +194,10 @@ btnCapture.addEventListener("click", async () => {
     canvas.width = w;
     canvas.height = h;
 
-    // Dibujar la imagen actual de la cámara
+    // Dibujar cámara
     ctx.drawImage(video, 0, 0, w, h);
 
-    // Asegurarnos de que hudLines esté actualizado
+    // Asegurar hudLines si estuviera vacío
     if (!hudLines || hudLines.length === 0) {
         const now = new Date();
         const fechaStr = now.toLocaleString();
@@ -204,7 +210,7 @@ btnCapture.addEventListener("click", async () => {
         ].filter(Boolean);
     }
 
-    // MISMO estilo del HUD: barra negra multilínea en la parte inferior
+    // Barra inferior multilínea igual al HUD
     ctx.font = "12px Arial";
     const lineHeight = 16;
     const paddingY = 6;
@@ -231,6 +237,12 @@ btnCapture.addEventListener("click", async () => {
             return;
         }
 
+        // Guardar en galería interna
+        const url = URL.createObjectURL(blob);
+        const timestamp = new Date().toLocaleString();
+        capturedPhotos.push({ url, timestamp });
+        btnGallery.disabled = capturedPhotos.length === 0 ? true : false;
+
         const file = new File([blob], "foto_pr.jpg", { type: "image/jpeg" });
 
         if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
@@ -246,9 +258,61 @@ btnCapture.addEventListener("click", async () => {
                 showToast("Compartir cancelado");
             }
         } else {
-            const url = URL.createObjectURL(blob);
-            window.open(url, "_blank");
+            const urlView = URL.createObjectURL(blob);
+            window.open(urlView, "_blank");
             showToast("Imagen generada");
         }
     }, "image/jpeg");
+});
+
+// ---------------------------
+// Galería interna
+// ---------------------------
+function openGallery() {
+    if (!capturedPhotos.length) {
+        showToast("Aún no has tomado fotos.");
+        return;
+    }
+    galleryOverlay.classList.add("show");
+    renderGallery();
+}
+
+function closeGallery() {
+    galleryOverlay.classList.remove("show");
+}
+
+function renderGallery() {
+    galleryGrid.innerHTML = "";
+    let first = true;
+
+    capturedPhotos.forEach((photo, index) => {
+        const img = document.createElement("img");
+        img.src = photo.url;
+        img.alt = `Foto ${index + 1}`;
+        img.addEventListener("click", () => {
+            document
+                .querySelectorAll("#galleryGrid img")
+                .forEach(el => el.classList.remove("selected"));
+            img.classList.add("selected");
+            galleryPreviewImg.src = photo.url;
+        });
+
+        galleryGrid.appendChild(img);
+
+        if (first) {
+            img.classList.add("selected");
+            galleryPreviewImg.src = photo.url;
+            first = false;
+        }
+    });
+}
+
+btnGallery.addEventListener("click", openGallery);
+btnCloseGallery.addEventListener("click", closeGallery);
+
+// Cerrar galería tocando fuera del contenido
+galleryOverlay.addEventListener("click", (e) => {
+    if (e.target === galleryOverlay) {
+        closeGallery();
+    }
 });
