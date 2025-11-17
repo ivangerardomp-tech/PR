@@ -1,90 +1,130 @@
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
-const btnStartCam = document.getElementById("btnStartCam");
 const btnCapture = document.getElementById("btnCapture");
+const btnFallback = document.getElementById("btnFallback");
 const statusEl = document.getElementById("status");
 
-let lat = null, lng = null;
+let lat = null;
+let lng = null;
 
-// ------------------------------------
+// ---------------------------
 // CÁMARA
-// ------------------------------------
+// ---------------------------
 async function initCamera() {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        alert("Este navegador no soporta cámara.");
-        return;
+        throw new Error("Este navegador no soporta cámara.");
     }
+
+    const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: "environment" }
+    });
+    video.srcObject = stream;
+}
+
+// ---------------------------
+// GEOLOCALIZACIÓN (Promise)
+// ---------------------------
+function getLocationOnce() {
+    return new Promise((resolve, reject) => {
+        if (!navigator.geolocation) {
+            return reject(new Error("Geolocalización no soportada."));
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            pos => {
+                lat = pos.coords.latitude;
+                lng = pos.coords.longitude;
+                console.log("Ubicación:", lat, lng);
+                resolve();
+            },
+            err => {
+                reject(err);
+            },
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+    });
+}
+
+// ---------------------------
+// AUTO-INICIO AL CARGAR
+// ---------------------------
+async function autoStart() {
+    statusEl.textContent = "Solicitando permisos de cámara y ubicación...";
 
     try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-            video: { facingMode: "environment" }
-        });
-        video.srcObject = stream;
-        statusEl.textContent = "Cámara lista ✓";
-    } catch (e) {
-        console.error("Error cámara:", e);
-        alert("No se pudo activar la cámara. Revisa los permisos en Ajustes.");
+        // Pedimos permisos casi al mismo tiempo
+        await Promise.all([
+            initCamera(),
+            getLocationOnce()
+        ]);
+
+        // Si llegó aquí, todo OK
+        btnCapture.disabled = false;
+        statusEl.textContent = "Listo para capturar ✅";
+
+    } catch (err) {
+        console.error("Error en autoStart:", err);
+        statusEl.textContent =
+            "No se pudo activar automáticamente la cámara. En algunos iPhone es obligatorio tocar un botón.";
+
+        // Mostramos botón de respaldo SOLO si falló
+        btnFallback.style.display = "inline-block";
     }
 }
 
-// ------------------------------------
-// GEOLOCALIZACIÓN
-// ------------------------------------
-function getLocation() {
-    if (!navigator.geolocation) {
-        statusEl.textContent = "Geolocalización no soportada.";
-        return;
-    }
-
-    navigator.geolocation.getCurrentPosition(
-        pos => {
-            lat = pos.coords.latitude;
-            lng = pos.coords.longitude;
-            console.log("Ubicación:", lat, lng);
-        },
-        err => {
-            console.error("Error GPS:", err);
-            statusEl.textContent = "No se pudo obtener ubicación.";
-        },
-        { enableHighAccuracy: true }
-    );
-}
-
-// ------------------------------------
-// BOTÓN: ACTIVAR CÁMARA (GESTO iOS)
-// ------------------------------------
-btnStartCam.addEventListener("click", async () => {
-    // iOS requiere que getUserMedia se llame dentro de un gesto del usuario
-    await initCamera();
-    getLocation();
-
-    // Si todo fue bien, habilitamos Capturar y ocultamos este botón
-    btnCapture.disabled = false;
-    btnStartCam.style.display = "none";
+// Arrancamos cuando el DOM esté listo
+document.addEventListener("DOMContentLoaded", () => {
+    autoStart();
 });
 
-// ------------------------------------
-// BOTÓN: CAPTURAR FOTO + PR + COMPARTIR
-// ------------------------------------
+// ---------------------------
+// BOTÓN DE RESPALDO (iOS)
+// ---------------------------
+btnFallback.addEventListener("click", async () => {
+    statusEl.textContent = "Intentando activar cámara...";
+    try {
+        await initCamera();
+        if (!lat || !lng) {
+            await getLocationOnce();
+        }
+        btnCapture.disabled = false;
+        btnFallback.style.display = "none";
+        statusEl.textContent = "Cámara activa ✅";
+    } catch (err) {
+        console.error("Error en fallback:", err);
+        alert("No se pudo activar la cámara. Revisa permisos en Ajustes.");
+    }
+});
+
+// ---------------------------
+// CAPTURAR FOTO + PR + COMPARTIR
+// ---------------------------
 btnCapture.addEventListener("click", async () => {
     if (!lat || !lng) {
         alert("Todavía no tengo la ubicación. Espera unos segundos e inténtalo de nuevo.");
         return;
     }
 
-    // Tramo más cercano según tus KML
+    // Aseguramos que las funciones existan
+    if (typeof nearestTramo !== "function" || typeof findPR !== "function") {
+        alert("Datos de tramo/PR aún no cargados. Espera unos segundos.");
+        return;
+    }
+
     const tramo = nearestTramo(lat, lng) || "SIN TRAMO";
 
-    // Aquí podrías calcular distancia real sobre la ruta densificada.
-    // De momento lo dejamos como 0 para el ejemplo:
+    // TODO: aquí podrías poner la distancia real sobre la ruta densificada.
     const distancia = 0;
     const prInfo = findPR(tramo, distancia);
 
-    const context = canvas.getContext("2d");
-    canvas.width = video.videoWidth || 1280;
-    canvas.height = video.videoHeight || 720;
+    const ctx = canvas.getContext("2d");
+    const w = video.videoWidth || 1280;
+    const h = video.videoHeight || 720;
 
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    canvas.width = w;
+    canvas.height = h;
+
+    ctx.drawImage(video, 0, 0, w, h);
 
     const fechaStr = new Date().toLocaleString();
 
@@ -96,14 +136,17 @@ btnCapture.addEventListener("click", async () => {
         `PR: ${prInfo.pr}+${prInfo.metros}m`
     ];
 
-    context.fillStyle = "rgba(0, 0, 0, 0.5)";
-    context.fillRect(10, 10, 700, 150);
+    // Fondo semitransparente para el texto
+    ctx.fillStyle = "rgba(0, 0, 0, 0.55)";
+    const boxWidth = w * 0.8;
+    const boxHeight = 150;
+    ctx.fillRect(10, 10, boxWidth, boxHeight);
 
-    context.fillStyle = "yellow";
-    context.font = "24px Arial";
+    ctx.fillStyle = "yellow";
+    ctx.font = "24px Arial";
     let y = 40;
     for (const line of textLines) {
-        context.fillText(line, 20, y);
+        ctx.fillText(line, 20, y);
         y += 28;
     }
 
@@ -126,10 +169,9 @@ btnCapture.addEventListener("click", async () => {
                 console.error("Error al compartir:", e);
             }
         } else {
-            // Fallback: mostrar la imagen en otra pestaña
             const url = URL.createObjectURL(blob);
             window.open(url, "_blank");
-            alert("Tu dispositivo no soporta compartir con archivos. Se abrió la imagen en otra pestaña.");
+            alert("Tu dispositivo no soporta compartir archivos desde el navegador. Se abrió la imagen en otra pestaña.");
         }
     }, "image/jpeg");
 });
