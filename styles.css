@@ -41,7 +41,7 @@ video {
     box-sizing: border-box;
     background: rgba(0, 0, 0, 0.45);
     color: #fff;
-    font-size: 12px;
+    font-size: 18px; /* 50% más grande que antes (12px -> 18px) */
     padding: 6px 8px;
     text-align: left;
     border-radius: 0 0 10px 10px;
@@ -61,11 +61,11 @@ video {
     gap: 14px;
 }
 
-/* Botones redondos */
+/* Botones redondos: todos mismo color */
 #btnCapture,
 #btnGallery,
 #btnConfig {
-    background: #38ada9;
+    background: #3c6382; /* mismo color para todos */
     border: none;
     padding: 15px;
     font-size: 22px;
@@ -74,15 +74,6 @@ video {
     border-radius: 50%;
     color: white;
     cursor: pointer;
-}
-
-/* Colores diferenciados */
-#btnGallery {
-    background: #3c6382;
-}
-
-#btnConfig {
-    background: #b71540;
 }
 
 /* Toast / notificación */
@@ -128,7 +119,7 @@ video {
         margin: 0 auto;
     }
 
-    /* Controles en columna, a la derecha (ya SIN rotar) */
+    /* Controles en columna, a la derecha (sin rotar) */
     .controls-row {
         position: fixed;
         right: 10px;
@@ -336,4 +327,3 @@ video {
     font-size: 14px;
     cursor: pointer;
 }
-
