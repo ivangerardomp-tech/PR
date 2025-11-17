@@ -1,7 +1,6 @@
 const video = document.getElementById("video");
 const canvas = document.getElementById("canvas");
 const btnCapture = document.getElementById("btnCapture");
-const btnFallback = document.getElementById("btnFallback");
 const statusEl = document.getElementById("status");
 
 let lat = null;
@@ -52,48 +51,26 @@ async function autoStart() {
     statusEl.textContent = "Solicitando permisos de cámara y ubicación...";
 
     try {
-        // Pedimos permisos casi al mismo tiempo
+        // Disparamos cámara y GPS al cargar
         await Promise.all([
             initCamera(),
             getLocationOnce()
         ]);
 
-        // Si llegó aquí, todo OK
         btnCapture.disabled = false;
         statusEl.textContent = "Listo para capturar ✅";
 
     } catch (err) {
         console.error("Error en autoStart:", err);
         statusEl.textContent =
-            "No se pudo activar automáticamente la cámara. En algunos iPhone es obligatorio tocar un botón.";
-
-        // Mostramos botón de respaldo SOLO si falló
-        btnFallback.style.display = "inline-block";
+            "No se pudo activar automáticamente la cámara. Revisa los permisos del navegador o del sistema.";
+        // Aquí ya NO hay botón de respaldo, como pediste.
     }
 }
 
 // Arrancamos cuando el DOM esté listo
 document.addEventListener("DOMContentLoaded", () => {
     autoStart();
-});
-
-// ---------------------------
-// BOTÓN DE RESPALDO (iOS)
-// ---------------------------
-btnFallback.addEventListener("click", async () => {
-    statusEl.textContent = "Intentando activar cámara...";
-    try {
-        await initCamera();
-        if (!lat || !lng) {
-            await getLocationOnce();
-        }
-        btnCapture.disabled = false;
-        btnFallback.style.display = "none";
-        statusEl.textContent = "Cámara activa ✅";
-    } catch (err) {
-        console.error("Error en fallback:", err);
-        alert("No se pudo activar la cámara. Revisa permisos en Ajustes.");
-    }
 });
 
 // ---------------------------
@@ -105,7 +82,6 @@ btnCapture.addEventListener("click", async () => {
         return;
     }
 
-    // Aseguramos que las funciones existan
     if (typeof nearestTramo !== "function" || typeof findPR !== "function") {
         alert("Datos de tramo/PR aún no cargados. Espera unos segundos.");
         return;
@@ -113,7 +89,7 @@ btnCapture.addEventListener("click", async () => {
 
     const tramo = nearestTramo(lat, lng) || "SIN TRAMO";
 
-    // TODO: aquí podrías poner la distancia real sobre la ruta densificada.
+    // TODO: aquí pondremos tu distancia real sobre la ruta densificada.
     const distancia = 0;
     const prInfo = findPR(tramo, distancia);
 
