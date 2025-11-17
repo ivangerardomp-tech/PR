@@ -61,9 +61,10 @@ video {
     gap: 14px;
 }
 
-/* Botón redondo captura */
+/* Botones redondos */
 #btnCapture,
-#btnGallery {
+#btnGallery,
+#btnConfig {
     background: #38ada9;
     border: none;
     padding: 15px;
@@ -75,9 +76,13 @@ video {
     cursor: pointer;
 }
 
-/* Botón galería un poco diferente (color) */
+/* Colores diferenciados */
 #btnGallery {
     background: #3c6382;
+}
+
+#btnConfig {
+    background: #b71540;
 }
 
 /* Toast / notificación */
@@ -114,7 +119,7 @@ video {
     .video-wrapper {
         max-width: none;
         width: auto;
-        height: calc(100vh - 40px); /* deja un poco de margen */
+        height: calc(100vh - 40px);
     }
 
     video {
@@ -123,7 +128,7 @@ video {
         margin: 0 auto;
     }
 
-    /* Controles en columna, a la derecha, rotados 90° */
+    /* Controles en columna, a la derecha (ya SIN rotar) */
     .controls-row {
         position: fixed;
         right: 10px;
@@ -132,12 +137,6 @@ video {
         flex-direction: column;
         gap: 14px;
         margin-top: 0;
-    }
-
-    #btnCapture,
-    #btnGallery {
-        transform: rotate(90deg);
-        transform-origin: center;
     }
 }
 
@@ -176,6 +175,7 @@ video {
         "header header"
         "grid preview";
     gap: 8px;
+    position: relative;
 }
 
 .gallery-content h3 {
@@ -247,3 +247,93 @@ video {
         max-height: 30vh;
     }
 }
+
+/* ===================== */
+/* Configuración HUD     */
+/* ===================== */
+
+#settingsOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.85);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 9998;
+    padding: 10px;
+    box-sizing: border-box;
+}
+
+#settingsOverlay.show {
+    display: flex;
+}
+
+.settings-content {
+    background: #102a43;
+    border-radius: 10px;
+    max-width: 400px;
+    width: 100%;
+    padding: 16px;
+    box-sizing: border-box;
+    color: #f5f6fa;
+    position: relative;
+    text-align: left;
+}
+
+.settings-content h3 {
+    margin-top: 0;
+    margin-bottom: 12px;
+}
+
+#btnCloseSettings {
+    position: absolute;
+    top: 8px;
+    right: 10px;
+    background: transparent;
+    border: none;
+    color: white;
+    font-size: 20px;
+    cursor: pointer;
+}
+
+#settingsForm {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+#settingsForm label {
+    font-size: 14px;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 6px;
+}
+
+.settings-text-label {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+}
+
+#txtCustom {
+    width: 100%;
+    padding: 6px;
+    border-radius: 4px;
+    border: 1px solid #3c6382;
+    font-size: 14px;
+    box-sizing: border-box;
+    margin-top: 4px;
+}
+
+#btnSaveSettings {
+    margin-top: 10px;
+    align-self: flex-end;
+    padding: 8px 14px;
+    border-radius: 6px;
+    border: none;
+    background: #2ecc71;
+    color: white;
+    font-size: 14px;
+    cursor: pointer;
+}
+
