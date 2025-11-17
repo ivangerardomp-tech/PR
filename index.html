@@ -15,7 +15,7 @@
 
 <body>
 
-    <!-- Contenedor del video + HUD encima -->
+    <!-- Contenedor del video + HUD -->
     <div class="video-wrapper">
         <video id="video" autoplay playsinline muted></video>
 
@@ -25,12 +25,27 @@
         </div>
     </div>
 
-    <!-- Botón de captura -->
-    <button id="btnCapture" disabled>📸</button>
+    <!-- Controles -->
+    <div class="controls-row">
+        <button id="btnGallery" disabled>🖼️</button>
+        <button id="btnCapture" disabled>📸</button>
+    </div>
 
     <canvas id="canvas" style="display:none"></canvas>
 
     <!-- Notificación interna -->
     <div id="toast"></div>
+
+    <!-- Galería de fotos tomadas -->
+    <div id="galleryOverlay">
+        <div class="gallery-content">
+            <button id="btnCloseGallery">✕</button>
+            <h3>Fotos tomadas</h3>
+            <div id="galleryGrid"></div>
+            <div id="galleryPreview">
+                <img id="galleryPreviewImg" src="" alt="Vista previa">
+            </div>
+        </div>
+    </div>
 </body>
 </html>
