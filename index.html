@@ -7,9 +7,6 @@
     <title>Captura con PR</title>
 
     <link rel="stylesheet" href="styles.css">
-    <!-- Ya NO cargamos manifest ni nada de PWA -->
-
-    <meta name="theme-color" content="#0a3d62">
 
     <script defer src="kml_loader.js"></script>
     <script defer src="pr_finder.js"></script>
@@ -17,7 +14,6 @@
 </head>
 
 <body>
-    <h2>Captura con PR</h2>
 
     <!-- Contenedor del video + HUD encima -->
     <div class="video-wrapper">
@@ -30,11 +26,9 @@
     </div>
 
     <!-- Botón de captura -->
-    <button id="btnCapture" disabled>📸 Capturar</button>
+    <button id="btnCapture" disabled>📸</button>
 
     <canvas id="canvas" style="display:none"></canvas>
-
-    <p id="status">Cargando KML y PRs…</p>
 
     <!-- Notificación interna -->
     <div id="toast"></div>
