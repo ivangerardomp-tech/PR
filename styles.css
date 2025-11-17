@@ -11,38 +11,25 @@ body {
     text-align: center;
     padding: 10px;
     box-sizing: border-box;
+    overflow: hidden; /* opcional para evitar scroll raro en horizontal */
 }
 
-/* Contenedor del video que se adapta al alto disponible */
+/* Contenedor del video que se adapta al ancho */
 .video-wrapper {
     position: relative;
     width: 100%;
     max-width: 700px;
-    margin: 0 auto 10px auto;
+    margin: 0 auto;
 }
 
-/* POR DEFECTO (retrato): video ocupa todo el ancho */
+/* Video: siempre mostramos toda la imagen (contain) */
 video {
     width: 100%;
     height: auto;
     display: block;
     border-radius: 10px;
     background: black;
-    object-fit: contain;  /* muestra toda la imagen, sin recortar */
-}
-
-/* En formato horizontal, aprovechamos el alto */
-@media (orientation: landscape) {
-    .video-wrapper {
-        max-width: none;
-        height: calc(100vh - 150px); /* deja espacio para título, botón y texto */
-    }
-
-    video {
-        width: auto;
-        height: 100%;
-        margin: 0 auto;
-    }
+    object-fit: contain;
 }
 
 /* HUD en vivo sobre el video (multilínea) */
@@ -58,25 +45,26 @@ video {
     padding: 6px 8px;
     text-align: left;
     border-radius: 0 0 10px 10px;
-    z-index: 3;              /* visible en Safari/iPhone */
-    pointer-events: none;    /* no bloquea taps en el video */
+    z-index: 3;
+    pointer-events: none;
 }
 
 #hud-text {
     line-height: 1.3;
 }
 
-button {
+/* Botón en modo vertical: centrado abajo */
+#btnCapture {
     background: #38ada9;
     border: none;
     padding: 15px;
     font-size: 20px;
-    width: 90%;
-    max-width: 400px;
-    border-radius: 10px;
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
     color: white;
     cursor: pointer;
-    margin: 8px 0;
+    margin-top: 10px;
 }
 
 /* Toast / notificación */
@@ -99,4 +87,36 @@ button {
 #toast.show {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
+}
+
+/* 📱 MODO HORIZONTAL (landscape) */
+@media (orientation: landscape) {
+    body {
+        display: flex;
+        flex-direction: row;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .video-wrapper {
+        max-width: none;
+        width: auto;
+        height: calc(100vh - 40px); /* deja un poco de margen */
+    }
+
+    video {
+        width: auto;
+        height: 100%;
+        margin: 0 auto;
+    }
+
+    /* Botón a la derecha, rotado 90° */
+    #btnCapture {
+        position: fixed;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%) rotate(90deg);
+        transform-origin: center;
+        margin-top: 0;
+    }
 }
