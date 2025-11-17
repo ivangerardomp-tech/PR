@@ -7,7 +7,6 @@
 
     <link rel="stylesheet" href="styles.css">
     <link rel="manifest" href="manifest.json">
-
     <meta name="theme-color" content="#0a3d62">
 
     <script defer src="kml_loader.js"></script>
@@ -18,13 +17,17 @@
 <body>
     <h2>Captura con PR</h2>
 
-    <video id="video" autoplay playsinline></video>
+    <!-- Video de la cámara -->
+    <video id="video" autoplay playsinline muted></video>
 
-    <button id="btnCapture">📸 Capturar</button>
+    <!-- Botón que DISPARA la cámara (gesto del usuario) -->
+    <button id="btnStartCam">🎥 Activar cámara</button>
+
+    <!-- Botón para capturar (empieza desactivado) -->
+    <button id="btnCapture" disabled>📸 Capturar</button>
 
     <canvas id="canvas" style="display:none"></canvas>
 
     <p id="status">Cargando KML y PRs…</p>
-
 </body>
 </html>
