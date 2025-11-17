@@ -124,35 +124,50 @@ function updateHUD() {
 
     if (hudConfig.showLatLng) {
         if (lat != null && lng != null) {
-            lines.push(`Lat: ${lat.toFixed(6)}`);
-            lines.push(`Lng: ${lng.toFixed(6)}`);
+            // Una sola línea: lat, lon
+            lines.push(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
         } else {
-            lines.push("Ubicación: obteniendo…");
+            lines.push("Coordenadas: obteniendo…");
         }
     }
 
-    if (hudConfig.showTramo) {
-        const tramoText = currentTramo ? `Tramo: ${currentTramo}` : "Tramo: calculando…";
-        lines.push(tramoText);
-    }
+    // RN + PR en una sola línea cuando ambos estén activos
+    const tramoOn = hudConfig.showTramo;
+    const prOn = hudConfig.showPR;
+    if (tramoOn || prOn) {
+        let rnPart = "";
+        let prPart = "";
 
-    if (hudConfig.showPR) {
-        let prStr;
-        if (!currentTramo) {
-            prStr = "PR: calculando…";
-        } else if (currentPR) {
-            prStr = `PR: ${currentPR.pr}+${currentPR.metros}m`;
-        } else {
-            prStr = "PR: calculando…";
+        if (tramoOn) {
+            if (currentTramo) {
+                rnPart = `RN ${currentTramo}`;
+            } else {
+                rnPart = "RN calculando…";
+            }
         }
-        lines.push(prStr);
+
+        if (prOn) {
+            if (!currentTramo) {
+                prPart = "PR calculando…";
+            } else if (currentPR) {
+                prPart = `PR ${currentPR.pr}+${currentPR.metros}m`;
+            } else {
+                prPart = "PR calculando…";
+            }
+        }
+
+        let line = "";
+        if (rnPart && prPart) line = `${rnPart}   ${prPart}`;
+        else if (rnPart) line = rnPart;
+        else if (prPart) line = prPart;
+
+        if (line) lines.push(line);
     }
 
     if (hudConfig.customText && hudConfig.customText.trim() !== "") {
         lines.push(hudConfig.customText.trim());
     }
 
-    // Si por alguna razón no se agregó nada, mantenemos algo mínimo
     if (lines.length === 0) {
         lines.push("HUD desactivado.");
     }
@@ -238,19 +253,37 @@ btnCapture.addEventListener("click", async () => {
     // Dibujar cámara
     ctx.drawImage(video, 0, 0, w, h);
 
-    // Asegurar hudLines si estuviera vacío
+    // Asegurar hudLines si estuviera vacío (seguimos misma lógica)
     if (!hudLines || hudLines.length === 0) {
         const now = new Date();
         const fechaStr = now.toLocaleString();
         const lines = [];
 
-        if (hudConfig.showDate) lines.push(`Fecha: ${fechaStr}`);
-        if (hudConfig.showLatLng && lat != null && lng != null) {
-            lines.push(`Lat: ${lat.toFixed(6)}`);
-            lines.push(`Lng: ${lng.toFixed(6)}`);
+        if (hudConfig.showDate) {
+            lines.push(`Fecha: ${fechaStr}`);
         }
-        if (hudConfig.showTramo) lines.push(`Tramo: ${tramo}`);
-        if (hudConfig.showPR) lines.push(`PR: ${prInfo.pr}+${prInfo.metros}m`);
+
+        if (hudConfig.showLatLng && lat != null && lng != null) {
+            lines.push(`${lat.toFixed(6)}, ${lng.toFixed(6)}`);
+        }
+
+        const tramoOn = hudConfig.showTramo;
+        const prOn = hudConfig.showPR;
+        if (tramoOn || prOn) {
+            let rnPart = "";
+            let prPart = "";
+
+            if (tramoOn) rnPart = `RN ${tramo}`;
+            if (prOn) prPart = `PR ${prInfo.pr}+${prInfo.metros}m`;
+
+            let line = "";
+            if (rnPart && prPart) line = `${rnPart}   ${prPart}`;
+            else if (rnPart) line = rnPart;
+            else if (prPart) line = prPart;
+
+            if (line) lines.push(line);
+        }
+
         if (hudConfig.customText && hudConfig.customText.trim() !== "") {
             lines.push(hudConfig.customText.trim());
         }
@@ -258,9 +291,9 @@ btnCapture.addEventListener("click", async () => {
         hudLines = lines.length ? lines : ["HUD desactivado."];
     }
 
-    // Barra inferior multilínea igual al HUD
-    ctx.font = "12px Arial";
-    const lineHeight = 16;
+    // Barra inferior multilínea igual al HUD (50% más grande)
+    ctx.font = "18px Arial";
+    const lineHeight = 24;
     const paddingY = 6;
     const paddingX = 8;
 
@@ -289,7 +322,7 @@ btnCapture.addEventListener("click", async () => {
         const url = URL.createObjectURL(blob);
         const timestamp = new Date().toLocaleString();
         capturedPhotos.push({ url, timestamp });
-        btnGallery.disabled = capturedPhotos.length === 0;
+        btnGallery.disabled = capturedPhotos.length === 0 ? true : false;
 
         const file = new File([blob], "foto_pr.jpg", { type: "image/jpeg" });
 
@@ -369,7 +402,7 @@ galleryOverlay.addEventListener("click", (e) => {
 // Configuración HUD
 // ---------------------------
 function openSettings() {
-    // cargar estado actual en el formulario
+    // cargar estado actual
     chkDate.checked = hudConfig.showDate;
     chkLatLng.checked = hudConfig.showLatLng;
     chkTramo.checked = hudConfig.showTramo;
@@ -399,7 +432,7 @@ settingsForm.addEventListener("submit", (e) => {
     hudConfig.showLatLng = chkLatLng.checked;
     hudConfig.showTramo = chkTramo.checked;
     hudConfig.showPR = chkPR.checked;
-    hudConfig.customText = (txtCustom.value || "").slice(0, 30);
+    hudConfig.customText = (txtCustom.value || "").slice(0, 50);
 
     closeSettings();
     updateHUD(); // aplicar de inmediato
