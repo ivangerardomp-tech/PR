@@ -17,14 +17,13 @@
 <body>
     <h2>Captura con PR</h2>
 
-    <!-- Video de la cámara -->
     <video id="video" autoplay playsinline muted></video>
 
-    <!-- Botón que DISPARA la cámara (gesto del usuario) -->
-    <button id="btnStartCam">🎥 Activar cámara</button>
-
-    <!-- Botón para capturar (empieza desactivado) -->
     <button id="btnCapture" disabled>📸 Capturar</button>
+    <!-- Botón SOLO de respaldo, oculto al inicio -->
+    <button id="btnFallback" style="display:none; margin-top:10px;">
+        🔄 Activar cámara si no se ve
+    </button>
 
     <canvas id="canvas" style="display:none"></canvas>
 
