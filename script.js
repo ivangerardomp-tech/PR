@@ -14,11 +14,28 @@ async function initCamera() {
         throw new Error("Este navegador no soporta cámara.");
     }
 
+    console.log("initCamera: solicitando getUserMedia...");
     const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: "environment" }
+        video: { facingMode: { ideal: "environment" } }
     });
+
+    console.log("initCamera: stream obtenido", stream);
     video.srcObject = stream;
+
+    // Estas líneas ayudan mucho en iOS
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("autoplay", "true");
+    video.muted = true;
+
+    video.onloadedmetadata = () => {
+        console.log("video.onloadedmetadata: videoWidth=", video.videoWidth, "videoHeight=", video.videoHeight);
+        statusEl.textContent = `Cámara lista ( ${video.videoWidth} x ${video.videoHeight} )`;
+        video.play().catch(err => {
+            console.error("Error al hacer video.play():", err);
+        });
+    };
 }
+
 
 // ---------------------------
 // GEOLOCALIZACIÓN (Promise)
