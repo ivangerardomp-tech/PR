@@ -15,6 +15,7 @@ body {
 
 video {
     width: 100%;
+    display: block;
     border-radius: 10px;
     background: black;
 }
@@ -32,6 +33,8 @@ video {
     padding: 4px 8px;
     text-align: left;
     border-radius: 0 0 10px 10px;
+    z-index: 3;              /* Asegura que se vea en Safari */
+    pointer-events: none;    /* No bloquea taps en el video */
 }
 
 #hud-text {
@@ -51,7 +54,7 @@ button {
     margin: 8px 0;
 }
 
-/* Toast / notificación visual */
+/* Toast / notificación */
 #toast {
     position: fixed;
     bottom: 20px;
