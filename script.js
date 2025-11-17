@@ -119,7 +119,8 @@ function updateHUD() {
     const lines = [];
 
     if (hudConfig.showDate) {
-        lines.push(`Fecha: ${fechaStr}`);
+        // Sin "Fecha:", solo el valor
+        lines.push(fechaStr);
     }
 
     if (hudConfig.showLatLng) {
@@ -253,14 +254,14 @@ btnCapture.addEventListener("click", async () => {
     // Dibujar cámara
     ctx.drawImage(video, 0, 0, w, h);
 
-    // Asegurar hudLines si estuviera vacío (seguimos misma lógica)
+    // Asegurar hudLines si estuviera vacío (misma lógica que HUD)
     if (!hudLines || hudLines.length === 0) {
         const now = new Date();
         const fechaStr = now.toLocaleString();
         const lines = [];
 
         if (hudConfig.showDate) {
-            lines.push(`Fecha: ${fechaStr}`);
+            lines.push(fechaStr);
         }
 
         if (hudConfig.showLatLng && lat != null && lng != null) {
@@ -291,7 +292,7 @@ btnCapture.addEventListener("click", async () => {
         hudLines = lines.length ? lines : ["HUD desactivado."];
     }
 
-    // Barra inferior multilínea igual al HUD (50% más grande)
+    // Barra inferior multilínea igual al HUD (18px)
     ctx.font = "18px Arial";
     const lineHeight = 24;
     const paddingY = 6;
@@ -432,7 +433,7 @@ settingsForm.addEventListener("submit", (e) => {
     hudConfig.showLatLng = chkLatLng.checked;
     hudConfig.showTramo = chkTramo.checked;
     hudConfig.showPR = chkPR.checked;
-    hudConfig.customText = (txtCustom.value || "").slice(0, 50);
+    hudConfig.customText = (txtCustom.value || "").slice(0, 40); // 40 caracteres
 
     closeSettings();
     updateHUD(); // aplicar de inmediato
